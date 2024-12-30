@@ -29,7 +29,7 @@ package-customer-service:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
   script:
     - echo "Building the Docker image for pitstop-customer-service"
-    - docker build -t "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME" .
+    - docker build -t "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME" ./pitstop-customer
     # - docker push "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME"
     # - echo "Docker image pushed successfully"
 
