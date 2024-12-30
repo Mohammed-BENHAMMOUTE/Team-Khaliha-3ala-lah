@@ -20,7 +20,7 @@ build:
   stage: build
   script:
     - echo "Building the application-----------------------------------------"
-    - npm intsall  
+    - npm install  
     - npm run build
     - echo "Build completed --------------------------------------------------"
   artifacts:
