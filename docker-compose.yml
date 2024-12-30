@@ -13,7 +13,7 @@ services:
   pitstop-gateway:
     build:
       context: ./pitstop-express-gateway
-    image: msalekmouad/pitstop-express-gateway:dev
+    image: slihatim/pitstop-express-gateway
     env_file:
       - ./.env  
     container_name: pitstop-express-gateway
@@ -45,7 +45,7 @@ services:
   pitstop-customer-service:
     build:
       context: ./pitstop-customer
-    image: msalekmouad/pitstop-customer:dev
+    image: slihatim/pitstop-customer
     env_file:
       - ./.env  
     container_name: pitstop-customer
@@ -90,7 +90,7 @@ services:
   pitstop-vehicle-service:
     build:
       context: ./pitstop-vehicle
-    image: msalekmouad/pitstop-vehicle:dev
+    image: slihatim/pitstop-vehicle
     env_file:
       - ./.env  
     container_name: pitstop-vehicle
@@ -135,7 +135,7 @@ services:
   pitstop-workshop-service:
     build:
       context: ./pitstop-workshop-planning
-    image: msalekmouad/pitstop-workshop-planning:dev
+    image: slihatim/pitstop-workshop-planning
     env_file:
       - ./.env  
     container_name: pitstop-workshop-planning

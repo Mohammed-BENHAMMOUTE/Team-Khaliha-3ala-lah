@@ -1,5 +1,5 @@
 http:
-  port: ${PORT:-8080}
+  port: ${PORT:-8079}
 admin:
   port: 9876
   host: localhost
