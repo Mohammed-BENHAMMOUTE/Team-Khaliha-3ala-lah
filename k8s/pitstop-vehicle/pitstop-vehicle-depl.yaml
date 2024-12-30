@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pitstop-vehicle-configmap
+data:
+    DB_USER: pitstop-user
+    DB_PASSWORD: pitstop-user
+    DB_NAME: pitstop
+    DB_HOST: pitstop-vehicle-database-service
+    DB_PORT: "3308"
+    SERVICE_NAME: pitstop-vehicle
+    PORT: "3002"
+    MESSAGE_BUS: pitstop-rabbitmq-service
+    MESSAGE_BUS_USERNAME: pitstop
+    MESSAGE_BUS_PASSWORD: pitstop
+    MESSAGE_BUS_TIMEOUT: "500"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pitstop-vehicle-depl
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: pitstop-vehicle
+  template:
+    metadata:
+      labels:
+        app: pitstop-vehicle
+    spec:
+      containers:
+        - name: pitstop-vehicle
+          image: msalekmouad/pitstop-vehicle:dev
+          ports:
+            - containerPort: 3002
+          envFrom:
+            - configMapRef:
+                name: pitstop-vehicle-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pitstop-vehicle-service
+spec:
+  ports:
+    - port: 3002
+  type: ClusterIP
+  selector:
+    app: pitstop-vehicle

@@ -1,0 +1,12 @@
+{
+  "name": "pitstop-microservices",
+  "version": "1.0.0",
+  "description": "Garage management system microservices using docker, nodejs and rabbitmq",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "MSALEK Mouad",
+  "license": "ISC",
+  "keywords": []
+}

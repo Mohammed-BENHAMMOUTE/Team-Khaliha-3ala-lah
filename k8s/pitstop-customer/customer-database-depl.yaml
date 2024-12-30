@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pitstop-customer-database-configmap
+data:
+  MYSQL_DATABASE: pitstop
+  MYSQL_ROOT_PASSWORD: pitstop-user
+  MYSQL_USER: pitstop-user
+  MYSQL_PASSWORD: pitstop-user
+  DATABASE_HOST: pitstop-customer-database-service
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: customer-db-volume
+  labels:
+    type: local
+spec:
+  storageClassName: "standard"
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: customer-db-pv-claim
+spec:
+  storageClassName: "standard"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pitstop-customer-database-service
+spec:
+  ports:
+   - name: mysql
+     port: 3307
+     targetPort: 3306
+  selector:
+    app: pitstop-customer-database
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pitstop-customer-database
+spec:
+  selector:
+    matchLabels:
+      app: pitstop-customer-database
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pitstop-customer-database
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        envFrom:
+            - configMapRef:
+                name: pitstop-customer-database-configmap
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: customerdb-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: customerdb-persistent-storage
+        persistentVolumeClaim:
+          claimName: customer-db-pv-claim

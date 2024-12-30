@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pitstop-rabbitmq-configmap
+data:
+  RABBITMQ_DEFAULT_USER: pitstop
+  RABBITMQ_DEFAULT_PASS: pitstop
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pitstop-rabbitmq-stateful
+spec:
+  selector:
+    matchLabels:
+      app: pitstop-rabbitmq
+  serviceName: pitstop-rabbitmq-service
+  replicas: 1
+  volumeClaimTemplates:
+  - metadata:
+      name: rabbitmq-data
+    spec:
+      storageClassName: "standard"
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: "6Gi"
+  template:
+    metadata:
+      labels:
+        app: pitstop-rabbitmq
+    spec:
+      containers:
+      - name: pitstop-rabbitmq
+        image: rabbitmq:3-management
+        envFrom:
+            - configMapRef:
+                name: pitstop-rabbitmq-configmap
+        ports:
+        - name: amqp
+          containerPort: 5672
+          protocol: TCP
+        - name: management
+          containerPort: 15672
+          protocol: TCP
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: pitstop-rabbitmq-management-service
+spec:
+  type: NodePort
+  ports:
+   - name: http
+     protocol: TCP
+     port: 15672
+     targetPort: management
+  selector:
+    app: pitstop-rabbitmq
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: pitstop-rabbitmq-service
+spec:
+  type: ClusterIP
+  ports:
+   - name: amqp
+     protocol: TCP
+     port: 5672
+     targetPort: amqp
+  selector:
+    app: pitstop-rabbitmq
