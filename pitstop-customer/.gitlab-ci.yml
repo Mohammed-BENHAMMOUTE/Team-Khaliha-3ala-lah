@@ -1,0 +1,34 @@
+stages:
+  - build
+  - package
+
+# Stage 1: Build the Node.js application
+build-customer-service:
+  stage: build
+  image: node:10
+  script:
+    - echo "Installing dependencies and building the Node.js app"
+    - echo "$ENV_FILE" > "$ENV_FILE_PATH"
+    - npm ci
+    - npm run build
+    - echo "Node.js app built successfully"
+  cache:
+      paths:
+          - node_modules/
+  artifacts:
+      paths:
+          - dist
+
+# Stage 2: Package the application into a Docker image
+package-customer-service:
+  stage: package
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+  script:
+    - echo "Building the Docker image for pitstop-customer-service"
+    - docker build -t "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME" .
+    - docker push "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME"
+    - echo "Docker image pushed successfully"
