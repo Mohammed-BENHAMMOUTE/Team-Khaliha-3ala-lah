@@ -9,7 +9,7 @@ build-customer-service:
   image: node:10
   script:
     - echo "Installing dependencies and building the Node.js app"
-    - echo "$ENV_FILE" > "pitstop-customer/$ENV_FILE_PATH"
+    # - echo "$ENV_FILE" > "pitstop-customer/$ENV_FILE_PATH"
     - npm ci
     - npm run build
     - echo "Node.js app built successfully"
