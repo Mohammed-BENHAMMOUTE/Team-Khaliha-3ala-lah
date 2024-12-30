@@ -22,9 +22,7 @@ package:
   stage: package
   image: docker:24
   services:
-    - docker:24-dind
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker:24-dind 
   script:
     - echo "Building Docker image for vehicle service"
     - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" .
@@ -36,5 +34,5 @@ publish:
     - docker:24-dind
   script:
     - echo "Logging into GitLab registry"
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" 
     - docker push "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME"
