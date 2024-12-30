@@ -1,2 +1,3 @@
 include:
+  - local: 'pitstop-vehicle/.gitlab-ci.yml'
   - local: 'pitstop-customer/.gitlab-ci.yml'
