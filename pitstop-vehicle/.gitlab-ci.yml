@@ -25,6 +25,7 @@ package:
     - docker:24-dind
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - cd devops/pitstop-vehicle  # Change to directory containing Dockerfile
   script:
     - echo "Building Docker image for vehicle service"
     - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" .
