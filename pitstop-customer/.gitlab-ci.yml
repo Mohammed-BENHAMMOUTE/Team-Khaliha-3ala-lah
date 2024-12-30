@@ -10,7 +10,7 @@ build-customer-service:
   script:
     - echo "Installing dependencies and building the Node.js app"
     # - echo "$ENV_FILE" > "pitstop-customer/$ENV_FILE_PATH"
-    - npm ci
+    - npm install --production=false
     - npm run build
     - echo "Node.js app built successfully"
   cache:
