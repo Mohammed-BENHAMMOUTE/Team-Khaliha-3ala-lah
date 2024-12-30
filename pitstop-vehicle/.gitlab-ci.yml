@@ -21,7 +21,6 @@ build:
   script:
     - echo "Building the application-----------------------------------------"
     - npm install  
-    - npm run build
     - echo "Build completed --------------------------------------------------"
   artifacts:
     paths:
@@ -34,7 +33,7 @@ package:
   stage: package
   script:
     - docker build -t $IMAGE_NAME:$CI_COMMIT_SHA .
-    - docker tag $IMAGE_NAME:$CI_COMMIT_SHA $IMAGE_NAME:latest
+    - docker tag $IMAGE_NAME:$CI_COMMIT_SHA $CI_REGISTRY_USER/$IMAGE_NAME:latest
 
 publish:
   stage: publish
