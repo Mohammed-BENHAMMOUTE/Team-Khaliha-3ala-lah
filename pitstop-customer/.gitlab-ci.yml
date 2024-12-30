@@ -38,5 +38,5 @@ publish-customer-service:
   script:
     - echo "Logging into GitLab registry-------------------------------------"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
-    - docker push $CI_REGISTRY_USER/$IMAGE_NAME:$CI_COMMIT_SHA
-    - docker push $CI_REGISTRY_USER/$IMAGE_NAME:latest
+    - docker push $CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_USER/pitstop-customer:latest
