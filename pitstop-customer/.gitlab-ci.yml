@@ -1,6 +1,7 @@
 stages:
   - build
   - package
+  - publish
 
 # Stage 1: Build the Node.js application
 build-customer-service:
@@ -30,5 +31,13 @@ package-customer-service:
   script:
     - echo "Building the Docker image for pitstop-customer-service"
     - docker build -t "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME" .
-    - docker push "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME"
-    - echo "Docker image pushed successfully"
+    # - docker push "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME"
+    # - echo "Docker image pushed successfully"
+
+publish:
+  stage: publish
+  script:
+    - echo "Logging into GitLab registry-------------------------------------"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker push $IMAGE_NAME:$CI_COMMIT_SHA
+    - docker push $IMAGE_NAME:latest
