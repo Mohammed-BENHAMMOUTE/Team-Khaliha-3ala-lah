@@ -28,7 +28,7 @@ package:
     - cd devops/pitstop-vehicle  # Change to directory containing Dockerfile
   script:
     - echo "Building Docker image for vehicle service"
-    - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" .
+    - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" ./pitstop-vehicle
 
 publish:
   stage: publish
