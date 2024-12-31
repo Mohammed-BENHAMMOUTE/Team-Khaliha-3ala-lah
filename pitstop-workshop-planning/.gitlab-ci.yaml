@@ -7,6 +7,7 @@ build-workshop-planning:
   image: node:10
   script:
     - echo "Installing dependencies for vehicle service"
+    - cd ./pitstop-workshop-planning
     - npm install --production=false
     - echo "Dependencies installed successfully"
   cache:
