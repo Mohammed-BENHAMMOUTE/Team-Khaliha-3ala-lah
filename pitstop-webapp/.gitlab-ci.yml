@@ -6,6 +6,7 @@ build-webapp-service:
   stage: build
   image: node:10
   script:
+    - npm install @vue/cli-service@4.5.15
     - npm install --production=false
     - npm run build
   artifacts:
