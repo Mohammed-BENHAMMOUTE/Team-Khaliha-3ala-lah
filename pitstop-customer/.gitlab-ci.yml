@@ -7,13 +7,11 @@ build-customer-service:
   stage: build
   image: node:10
   script:
-    - echo "Installing dependencies and building the Node.js app"
-    # - echo "$ENV_FILE" > "pitstop-customer/$ENV_FILE_PATH"
+    - cd pitstop-customer
     - npm install --production=false
-    - echo "Node.js app built successfully"
   cache:
       paths:
-          - node_modules/
+          - pitstop-customer/node_modules/
 
 # Stage 2: Package the application into a Docker image
 package-customer-service:
