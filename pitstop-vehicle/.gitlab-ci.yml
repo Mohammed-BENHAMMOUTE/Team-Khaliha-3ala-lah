@@ -25,5 +25,5 @@ package:
   script:
     - echo "Building and pushing vehicle service Docker image"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" .
+    - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" ./pitstop-vehicle
     - docker push "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME"
