@@ -14,9 +14,6 @@ build-customer-service:
   cache:
       paths:
           - node_modules/
-  artifacts:
-      paths:
-          - dist
 
 # Stage 2: Package the application into a Docker image
 package-customer-service:
