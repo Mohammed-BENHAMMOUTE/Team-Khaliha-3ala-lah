@@ -12,11 +12,11 @@ build-vehicle-service:
     - echo "Dependencies installed successfully"
   cache:
     paths:
-      - node_modules/
+      - pitstop-vehicle/node_modules/
   artifacts:
     paths:
-      - node_modules/
-      - package*.json
+      - pitstop-vehicle/node_modules/
+      - pitstop-vehicle/package*.json
 
 package-vehicle-service:
   stage: package

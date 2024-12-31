@@ -12,11 +12,11 @@ build-workshop-planning:
     - echo "Dependencies installed successfully"
   cache:
     paths:
-      - node_modules/
+      - pitstop-workshop-planning/node_modules/
   artifacts:
     paths:
-      - node_modules/
-      - package*.json
+      - pitstop-workshop-planning/node_modules/
+      - pitstop-workshop-planning/package*.json
 
 package-workshop-planning:
   stage: package
