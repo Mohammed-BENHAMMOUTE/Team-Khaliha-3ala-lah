@@ -11,8 +11,8 @@ build-customer-service:
     - npm install --production=false
   cache:
       paths:
-          - pitstop-customer/node_modules/
-
+        - pitstop-customer/node_modules/
+        - pitstop-vehicle/package*.json
 # Stage 2: Package the application into a Docker image
 package-customer-service:
   stage: package
