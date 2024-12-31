@@ -7,7 +7,7 @@ build-customer-service:
   stage: build
   image: node:10
   script:
-    - cd pitstop-customer
+    - cd ./pitstop-customer
     - npm install --production=false
   cache:
       paths:

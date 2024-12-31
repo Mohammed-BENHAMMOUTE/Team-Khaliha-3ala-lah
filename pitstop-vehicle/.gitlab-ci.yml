@@ -7,6 +7,7 @@ build-vehicle-service:
   image: node:10
   script:
     - echo "Installing dependencies for vehicle service"
+    - cd ./pitstop-vehicle
     - npm install --production=false
     - echo "Dependencies installed successfully"
   cache:
