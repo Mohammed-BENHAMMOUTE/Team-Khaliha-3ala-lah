@@ -1,7 +1,6 @@
 stages:
   - build
   - package
-  - publish
 
 build:
   stage: build
@@ -22,17 +21,9 @@ package:
   stage: package
   image: docker:24
   services:
-    - docker:24-dind 
-  script:
-    - echo "Building Docker image for vehicle service"
-    - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" .
-
-publish:
-  stage: publish
-  image: docker:24
-  services:
     - docker:24-dind
   script:
-    - echo "Logging into GitLab registry"
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" 
+    - echo "Building and pushing vehicle service Docker image"
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker build -t "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME" .
     - docker push "$CI_REGISTRY_USER/pitstop-vehicle:$CI_COMMIT_REF_NAME"
