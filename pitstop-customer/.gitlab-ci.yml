@@ -12,7 +12,7 @@ build-customer-service:
   cache:
       paths:
         - pitstop-customer/node_modules/
-        - pitstop-vehicle/package*.json
+        - pitstop-customer/package*.json
 # Stage 2: Package the application into a Docker image
 package-customer-service:
   stage: package
