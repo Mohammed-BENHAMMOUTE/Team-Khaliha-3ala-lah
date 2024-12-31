@@ -2,7 +2,7 @@ stages:
   - build
   - package
 
-build:
+build-vehicle-service:
   stage: build
   image: node:10
   script:
@@ -17,7 +17,7 @@ build:
       - node_modules/
       - package*.json
 
-package:
+package-vehicle-service:
   stage: package
   image: docker:24
   services:
