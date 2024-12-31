@@ -1,0 +1,29 @@
+stages:
+  - build
+  - package
+
+build-vehicle-service:
+  stage: build
+  image: node:10
+  script:
+    - echo "Installing dependencies for vehicle service"
+    - npm install --production=false
+    - echo "Dependencies installed successfully"
+  cache:
+    paths:
+      - node_modules/
+  artifacts:
+    paths:
+      - node_modules/
+      - package*.json
+
+package-vehicle-service:
+  stage: package
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - echo "Building and pushing vehicle service Docker image"
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker build -t "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME" ./pitstop-workshop-planning
+    - docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME"
