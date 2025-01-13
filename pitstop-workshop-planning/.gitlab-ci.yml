@@ -1,11 +1,6 @@
 stages:
   - build
   - package
-
-variables:
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""
-
 build-workshop-planning:
   stage: build
   image: node:10
@@ -21,20 +16,11 @@ build-workshop-planning:
     paths:
       - pitstop-workshop-planning/node_modules/
       - pitstop-workshop-planning/package*.json
-
 package-workshop-planning:
   stage: package
   image: docker:24
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: tcp://docker:2375
   services:
-    - name: docker:24-dind
-      alias: docker
-      command: ["--tls=false", "--tls-verify=false", "--host=unix:///var/run/docker.sock", "--host=tcp://0.0.0.0:2375"]
-  before_script:
-    - sleep 10  # Give Docker time to start
-    - docker info  # Verify Docker connection
+    - docker:24-dind
   script:
     - echo "Building and pushing vehicle service Docker image"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
