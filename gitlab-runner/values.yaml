@@ -1,12 +1,17 @@
 gitlabUrl: https://gitlab.com/
 runnerRegistrationToken: "glrt-t3_t9iFyq3UythTsTyT9zzp"
 
-serviceAccount:
-  name: gitlab-runner
-  create: false
-
 rbac:
-  create: false
+  create: true
+  rules:
+    - resources: ["pods", "pods/exec", "pods/attach", "secrets", "configmaps"]
+      verbs: ["get", "list", "watch", "create", "patch", "delete"]
+    - resources: ["services"]
+      verbs: ["get", "list", "watch", "create", "patch", "delete"]
+
+serviceAccount:
+  create: true
+  name: gitlab-runner
 
 runners:
   executor: kubernetes
@@ -14,7 +19,7 @@ runners:
   config: |
     [[runners]]
       name = "k8s-runner"
-      output_limit = 4096
+      executor = "kubernetes"
       [runners.kubernetes]
         namespace = "gitlab-runner"
         image = "ubuntu:20.04"
@@ -24,11 +29,3 @@ runners:
         cpu_limit = "500m"
         memory_request = "256Mi"
         memory_limit = "512Mi"
-        helper_cpu_request = "250m"
-        helper_cpu_limit = "500m"
-        helper_memory_request = "256Mi"
-        helper_memory_limit = "512Mi"
-        poll_timeout = 600
-        poll_interval = 5
-        concurrent = 10
-        check_interval = 30
