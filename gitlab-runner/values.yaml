@@ -21,5 +21,10 @@ runners:
       [runners.kubernetes]
         namespace = "gitlab-runner"
         image = "ubuntu:20.04"
+        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:x86_64-latest"
         privileged = true
         service_account = "gitlab-runner"
+        cpu_request = "250m"
+        cpu_limit = "500m"
+        memory_request = "256Mi"
+        memory_limit = "512Mi"
