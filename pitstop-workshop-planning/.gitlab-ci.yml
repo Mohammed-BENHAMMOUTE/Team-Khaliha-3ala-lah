@@ -25,11 +25,16 @@ build-workshop-planning:
 package-workshop-planning:
   stage: package
   image: docker:24
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: tcp://docker:2375
   services:
     - name: docker:24-dind
-      command: ["--tls=false"]
-  variables:
-    DOCKER_DRIVER: overlay2
+      alias: docker
+      command: ["--tls=false", "--tls-verify=false", "--host=unix:///var/run/docker.sock", "--host=tcp://0.0.0.0:2375"]
+  before_script:
+    - sleep 10  # Give Docker time to start
+    - docker info  # Verify Docker connection
   script:
     - echo "Building and pushing vehicle service Docker image"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
