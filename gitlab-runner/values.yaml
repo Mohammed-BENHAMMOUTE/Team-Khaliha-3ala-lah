@@ -8,7 +8,6 @@ rbac:
       verbs: ["get", "list", "watch", "create", "patch", "delete"]
     - resources: ["services"]
       verbs: ["get", "list", "watch", "create", "patch", "delete"]
-
 serviceAccount:
   create: true
   name: gitlab-runner
