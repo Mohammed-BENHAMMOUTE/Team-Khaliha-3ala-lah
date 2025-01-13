@@ -1,7 +1,6 @@
 stages:
   - build
   - package
-
 build-workshop-planning:
   stage: build
   image: node:10
@@ -17,7 +16,6 @@ build-workshop-planning:
     paths:
       - pitstop-workshop-planning/node_modules/
       - pitstop-workshop-planning/package*.json
-
 package-workshop-planning:
   stage: package
   image: docker:24
