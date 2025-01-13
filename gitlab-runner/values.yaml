@@ -24,7 +24,3 @@ runners:
         image = "ubuntu:20.04"
         privileged = true
         service_account = "gitlab-runner"
-        cpu_request = "250m"
-        cpu_limit = "500m"
-        memory_request = "256Mi"
-        memory_limit = "512Mi"
