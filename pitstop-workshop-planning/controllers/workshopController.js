@@ -6,7 +6,7 @@ let sequelize = require("sequelize");
 const { Op } = require('sequelize')
 
 
-/* GET /ping (for testing) */
+/* GET /ping (for //testing) */
 exports.pingPong = (req, res, next) => {
     res.status(resCode.OK).json({
         message: "pong"
