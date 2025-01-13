@@ -1,0 +1,26 @@
+gitlabUrl: https://gitlab.com/
+
+runnerRegistrationToken: "glrt-t3_t9iFyq3UythTsTyT9zzp"
+
+serviceAccount:
+  name: gitlab-runner
+  create: false
+
+rbac:
+  create: false
+
+runners:
+  executor: kubernetes
+  config: |
+    [[runners]]
+      [runners.kubernetes]
+        namespace = "gitlab-runner"
+        image = "ubuntu:20.04"
+        privileged = true
+        service_account = "gitlab-runner"
+        cpu_request = "250m"
+        cpu_limit = "500m"
+        memory_request = "256Mi"
+        memory_limit = "512Mi"
+  tags: ["kubernetes"]
+  name: "gitlab-runner"
