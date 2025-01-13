@@ -11,6 +11,7 @@ rbac:
 
 runners:
   executor: kubernetes
+  tags: ["devops"]  
   config: |
     [[runners]]
       [runners.kubernetes]
@@ -22,5 +23,3 @@ runners:
         cpu_limit = "500m"
         memory_request = "256Mi"
         memory_limit = "512Mi"
-  tags: ["kubernetes"]
-  name: "gitlab-runner"
