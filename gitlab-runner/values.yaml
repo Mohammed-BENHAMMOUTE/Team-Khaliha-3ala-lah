@@ -13,6 +13,8 @@ runners:
   tags: ["devops"]
   config: |
     [[runners]]
+      name = "k8s-runner"
+      output_limit = 4096
       [runners.kubernetes]
         namespace = "gitlab-runner"
         image = "ubuntu:20.04"
@@ -22,6 +24,11 @@ runners:
         cpu_limit = "500m"
         memory_request = "256Mi"
         memory_limit = "512Mi"
-        tls_verify = false
+        helper_cpu_request = "250m"
+        helper_cpu_limit = "500m"
+        helper_memory_request = "256Mi"
+        helper_memory_limit = "512Mi"
         poll_timeout = 600
         poll_interval = 5
+        concurrent = 10
+        check_interval = 30
