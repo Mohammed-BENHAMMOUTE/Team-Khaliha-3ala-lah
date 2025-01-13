@@ -1,6 +1,11 @@
 stages:
   - build
   - package
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
 build-workshop-planning:
   stage: build
   image: node:10
@@ -16,11 +21,15 @@ build-workshop-planning:
     paths:
       - pitstop-workshop-planning/node_modules/
       - pitstop-workshop-planning/package*.json
+
 package-workshop-planning:
   stage: package
   image: docker:24
   services:
-    - docker:24-dind
+    - name: docker:24-dind
+      command: ["--tls=false"]
+  variables:
+    DOCKER_DRIVER: overlay2
   script:
     - echo "Building and pushing vehicle service Docker image"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
