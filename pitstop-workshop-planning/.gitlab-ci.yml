@@ -1,65 +1,99 @@
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  # Define cache key variables
+  CACHE_KEY: ${CI_COMMIT_REF_SLUG}
+  NODE_VERSION: "10"
+
+# Define cache templates
+.node_cache_template: &node_cache
+  cache:
+    key: ${CACHE_KEY}-node
+    paths:
+      - pitstop-workshop-planning/.npm/
+      - pitstop-workshop-planning/node_modules/
+    policy: pull-push
+
+.docker_cache_template: &docker_cache
+  cache:
+    key: ${CACHE_KEY}-docker
+    paths:
+      - pitstop-workshop-planning/.docker/
+    policy: pull-push
+
 stages:
   - build
   - security
   - package
 
-variables:
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""
-  NODE_ENV: production
-
 build-workshop-planning:
   stage: build
-  image: node:10
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: always
-    - if: '$CI_COMMIT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
-      when: always
+  image: node:${NODE_VERSION}
+  <<: *node_cache
+  before_script:
+    - cd pitstop-workshop-planning
+    - npm ci --cache .npm --prefer-offline
   script:
-    - echo "Installing dependencies for vehicle service"
-    - cd ./pitstop-workshop-planning
+    - echo "Installing dependencies for workshop planning service"
     - npm install --production=false
     - echo "Dependencies installed successfully"
-  cache:
-    paths:
-      - pitstop-workshop-planning/node_modules/
   artifacts:
     paths:
       - pitstop-workshop-planning/node_modules/
       - pitstop-workshop-planning/package*.json
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH'
+      when: always
+    - when: never
 
 workshop-planning-security-scan:
   stage: security
   image:
     name: aquasec/trivy:latest
     entrypoint: [""]
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: on_success
-    - when: never
+  needs:
+    - build-workshop-planning
   script:
     - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-workshop-planning
   artifacts:
     paths:
       - trivy-report.json
     expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: on_success
+    - when: never
 
 package-workshop-planning:
-  stage: package
+  stage: package 
   image: docker:24
   services:
     - docker:24-dind
+  <<: *docker_cache
+  needs:
+    - workshop-planning-security-scan
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+  script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "main" ]]; then
+        docker build -t "$CI_REGISTRY_USER/pitstop-workshop-planning:latest" \
+                    -t "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_SHA" \
+                    ./pitstop-workshop-planning
+        docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:latest"
+        docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_SHA"
+      else
+        docker build -t "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME" ./pitstop-workshop-planning
+        docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME"
+      fi
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - pitstop-workshop-planning/**
       when: always
     - when: never
-  script:
-    - echo "Building and pushing vehicle service Docker image"
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker build -t "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME" ./pitstop-workshop-planning
-    - docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME"
