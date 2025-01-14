@@ -34,10 +34,10 @@ pitstop-vehicle-security-scan:
     name: aquasec/trivy:latest
     entrypoint: [""]
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: always
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: on_success
+    - if: '$CI_COMMIT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: always
     - when: never
   script:
     - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL  ./pitstop-vehicle

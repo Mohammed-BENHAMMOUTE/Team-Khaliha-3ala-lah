@@ -21,6 +21,7 @@ build-webapp-service:
       when: always
     - if: '$CI_COMMIT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
       when: always
+    - when: never
 
 webapp-security-scan:
   stage: security

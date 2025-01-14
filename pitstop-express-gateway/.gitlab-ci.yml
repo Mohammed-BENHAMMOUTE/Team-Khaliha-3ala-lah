@@ -22,9 +22,9 @@ build-express-gateway-service:
       - pitstop-express-gateway/node_modules
       - pitstop-express-gateway/package*.json
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
-      when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
       when: always
     - when: never
 
