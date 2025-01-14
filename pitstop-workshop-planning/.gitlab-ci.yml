@@ -26,7 +26,7 @@ build-workshop-planning:
       - pitstop-workshop-planning/node_modules/
       - pitstop-workshop-planning/package*.json
 
-security-scan:
+workshop-planning-security-scan:
   stage: security
   image: aquasec/trivy:latest
   rules:
@@ -34,7 +34,7 @@ security-scan:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: on_success
   script:
-    - trivy filesystem --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-workshop-planning
+    - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-workshop-planning
   artifacts:
     paths:
       - trivy-report.json

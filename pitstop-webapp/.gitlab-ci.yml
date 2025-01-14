@@ -22,7 +22,7 @@ build-webapp-service:
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps" || $CI_PIPELINE_SOURCE == "merge_request_event"
 
-security-scan:
+webapp-security-scan:
   stage: security
   image: aquasec/trivy:latest
   rules:
@@ -30,7 +30,7 @@ security-scan:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: on_success
   script:
-    - trivy filesystem --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-webapp
+    - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-webapp
   artifacts:
     paths:
       - trivy-report.json

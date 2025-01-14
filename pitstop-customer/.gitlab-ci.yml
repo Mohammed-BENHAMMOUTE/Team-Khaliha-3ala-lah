@@ -28,7 +28,7 @@ pitstop-customer-security-scan:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: on_success
   script:
-    - trivy filesystem --format json -o trivy-report.json --severity HIGH,CRITICAL  ./pitstop-customer
+    - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL  ./pitstop-customer
   artifacts:
     paths:
       - trivy-report.json
