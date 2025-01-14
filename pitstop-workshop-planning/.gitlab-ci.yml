@@ -12,7 +12,7 @@ build-workshop-planning:
   stage: build
   image: node:10
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps" ||$CI_PIPELINE_SOURCE == "merge_request_event" 
   script:
     - echo "Installing dependencies for vehicle service"
     - cd ./pitstop-workshop-planning
