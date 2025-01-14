@@ -1,6 +1,10 @@
 stages:
   - build
+  - security
   - package
+
+variables:
+  NODE_ENV: production
 
 # Stage 1: Build the Node.js application
 build-customer-service:
@@ -13,6 +17,23 @@ build-customer-service:
       paths:
         - pitstop-customer/node_modules/
         - pitstop-customer/package*.json
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps" || $CI_PIPELINE_SOURCE == "merge_request_event"
+
+security-scan:
+  stage: security
+  image: aquasec/trivy:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: on_success
+  script:
+    - trivy fs --format json --output trivy-report.json --severity HIGH,CRITICAL ./pitstop-customer
+  artifacts:
+    paths:
+      - trivy-report.json
+    expire_in: 1 week
+
 # Stage 2: Package the application into a Docker image
 package-customer-service:
   stage: package
@@ -25,3 +46,5 @@ package-customer-service:
     - docker build -t "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME" -t "$CI_REGISTRY_USER/pitstop-customer:latest" ./pitstop-customer
     - docker push "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME"
     - docker push "$CI_REGISTRY_USER/pitstop-customer:latest"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"

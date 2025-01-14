@@ -1,6 +1,10 @@
 stages:
   - build
+  - security
   - package
+
+variables:
+  NODE_ENV: production
 
 build-webapp-service:
   stage: build
@@ -15,12 +19,30 @@ build-webapp-service:
   cache:
       paths:
           - pitstop-webapp/node_modules/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps" || $CI_PIPELINE_SOURCE == "merge_request_event"
+
+security-scan:
+  stage: security
+  image: aquasec/trivy:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: on_success
+  script:
+    - trivy fs --format json --output trivy-report.json --severity HIGH,CRITICAL ./pitstop-webapp
+  artifacts:
+    paths:
+      - trivy-report.json
+    expire_in: 1 week
 
 package-webapp-service:
   stage: package
   image: docker:24
   services:
     - docker:24-dind
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
   script:
