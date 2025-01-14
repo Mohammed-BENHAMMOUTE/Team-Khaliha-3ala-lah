@@ -1,9 +1,18 @@
 stages:
   - build
+  - security
   - package
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  NODE_ENV: production
+
 build-workshop-planning:
   stage: build
   image: node:10
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - echo "Installing dependencies for vehicle service"
     - cd ./pitstop-workshop-planning
@@ -16,13 +25,33 @@ build-workshop-planning:
     paths:
       - pitstop-workshop-planning/node_modules/
       - pitstop-workshop-planning/package*.json
+
+security-scan:
+  stage: security
+  image: aquasec/trivy:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: on_success
+  script:
+    - trivy fs --format json --output trivy-report.json --severity HIGH,CRITICAL ./pitstop-workshop-planning
+  artifacts:
+    paths:
+      - trivy-report.json
+    expire_in: 1 week
+
 package-workshop-planning:
   stage: package
   image: docker:24
   services:
     - docker:24-dind
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - echo "Building and pushing vehicle service Docker image"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker build -t "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME" ./pitstop-workshop-planning
     - docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME"
+  # artifacts:
+  #   paths:
+  #     - docker-image.tar
