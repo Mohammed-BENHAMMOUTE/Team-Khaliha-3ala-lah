@@ -12,7 +12,11 @@ build-workshop-planning:
   stage: build
   image: node:10
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps" ||$CI_PIPELINE_SOURCE == "merge_request_event" 
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never
   script:
     - echo "Installing dependencies for vehicle service"
     - cd ./pitstop-workshop-planning
@@ -32,9 +36,11 @@ workshop-planning-security-scan:
     name: aquasec/trivy:latest
     entrypoint: [""]
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: on_success
+    - when: never
   script:
     - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-workshop-planning
   artifacts:
@@ -48,12 +54,13 @@ package-workshop-planning:
   services:
     - docker:24-dind
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - pitstop-workshop-planning/**
+      when: always
+    - when: never
   script:
     - echo "Building and pushing vehicle service Docker image"
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
     - docker build -t "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME" ./pitstop-workshop-planning
     - docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME"
-  # artifacts:
-  #   paths:
-  #     - docker-image.tar

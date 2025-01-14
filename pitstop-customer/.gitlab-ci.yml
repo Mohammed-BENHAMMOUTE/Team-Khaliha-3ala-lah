@@ -18,7 +18,11 @@ build-customer-service:
         - pitstop-customer/node_modules/
         - pitstop-customer/package*.json
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never
 
 pitstop-customer-security-scan:
   stage: security
@@ -26,9 +30,11 @@ pitstop-customer-security-scan:
     name: aquasec/trivy:latest
     entrypoint: [""]
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: on_success
+    - when: never
   script:
     - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL  ./pitstop-customer
   artifacts:
@@ -49,4 +55,8 @@ package-customer-service:
     - docker push "$CI_REGISTRY_USER/pitstop-customer:$CI_COMMIT_REF_NAME"
     - docker push "$CI_REGISTRY_USER/pitstop-customer:latest"
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - pitstop-customer/**
+      when: always
+    - when: never

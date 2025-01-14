@@ -22,7 +22,11 @@ build-express-gateway-service:
       - pitstop-express-gateway/node_modules
       - pitstop-express-gateway/package*.json
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never
 
 gateway-security-scan:
   stage: security
@@ -30,9 +34,11 @@ gateway-security-scan:
     name: aquasec/trivy:latest
     entrypoint: [""]
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: on_success
+    - when: never
   script:
     - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-express-gateway
   artifacts:
@@ -51,4 +57,8 @@ package-express-gateway-service:
     - docker build -t "$CI_REGISTRY_USER/pitstop-gateway:$CI_COMMIT_REF_NAME" ./pitstop-express-gateway
     - docker push "$CI_REGISTRY_USER/pitstop-gateway:$CI_COMMIT_REF_NAME"
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - pitstop-express-gateway/**
+      when: always
+    - when: never
