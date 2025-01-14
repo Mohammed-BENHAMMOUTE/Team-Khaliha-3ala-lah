@@ -3,9 +3,6 @@ stages:
   - security
   - package
 
-variables:
-  NODE_ENV: production
-
 build-webapp-service:
   stage: build
   image: node:10
@@ -20,11 +17,10 @@ build-webapp-service:
       paths:
           - pitstop-webapp/node_modules/
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
-      when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: always
-    - when: never
+    - if: '$CI_COMMIT_BRANCH && $CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: always
 
 webapp-security-scan:
   stage: security
