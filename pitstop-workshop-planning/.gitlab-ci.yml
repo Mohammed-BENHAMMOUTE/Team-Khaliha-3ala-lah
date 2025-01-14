@@ -28,8 +28,9 @@ build-workshop-planning:
 
 workshop-planning-security-scan:
   stage: security
-  image: aquasec/trivy:latest
-  entrypoint: [""]
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
