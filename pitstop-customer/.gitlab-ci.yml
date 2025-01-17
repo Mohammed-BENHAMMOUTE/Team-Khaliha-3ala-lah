@@ -109,7 +109,11 @@ dast:
 
 security_gate:
   stage: security
-  needs: ["sast", "dependency_scanning", "container_scanning", "dast"]
+  needs:
+    - job: sast
+    - job: dependency_scanning
+    - job: container_scanning
+    - job: dast
   script:
     - |
       for report in gl-*-report.json; do
