@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pitstop-customer-configmap
+data:
+    DB_USER: pitstop-user
+    DB_PASSWORD: pitstop-user
+    DB_NAME: pitstop
+    DB_HOST: pitstop-customer-database-service
+    DB_PORT: "3307"
+    SERVICE_NAME: pitstop-customer
+    PORT: "3001"
+    MESSAGE_BUS: pitstop-rabbitmq-service
+    MESSAGE_BUS_USERNAME: pitstop
+    MESSAGE_BUS_PASSWORD: pitstop
+    MESSAGE_BUS_TIMEOUT: "500"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pitstop-customer-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pitstop-customer
+  template:
+    metadata:
+      labels:
+        app: pitstop-customer
+    spec:
+      containers:
+        - name: pitstop-customer
+          image: msalekmouad/pitstop-customer:dev
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: pitstop-customer-configmap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pitstop-customer-service
+spec:
+  ports:
+    - port: 3001
+  type: NodePort
+  selector:
+    app: pitstop-customer

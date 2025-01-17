@@ -1,13 +1,77 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/pipeline/#customization
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-- test
-sast:
-  stage: test
+  - security
+  - test 
+  - build
+  - package
+  - container-security
+  - deploy-k8s
+  - dast
+
 include:
-- template: Security/SAST.gitlab-ci.yml
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: DAST.gitlab-ci.yml
+  # - local: 'pitstop-customer/.gitlab-ci.yml'
+  # - local: 'pitstop-vehicle/.gitlab-ci.yml'
+  - local: 'pitstop-webapp/.gitlab-ci.yml'
+  # - local: 'pitstop-workshop-planning/.gitlab-ci.yml'
+  # - local: 'pitstop-express-gateway/.gitlab-ci.yml'
+
+
+gemnasium-dependency_scanning:
+  tags:
+    - pitstop-docker
+  rules:
+    - when: always
+
+
+container_scanning:
+  tags:
+    - pitstop-docker
+  stage: container-security
+  rules:
+    - when: always
+
+# dast:
+#   stage: dast
+#   services:
+#     - name: $CS_IMAGE
+#       alias: pitstop-webapp
+#   rules:
+#     - when: always
+
+
+pre-commit:
+  stage: security
+  image: python:3.9
+  tags:
+    - pitstop-docker
+  before_script:
+    - apt-get update && apt-get install -y curl git
+    # Install Talisman non-interactively
+    - mkdir -p ~/.talisman/bin
+    - curl --silent -o ~/.talisman/bin/talisman https://github.com/thoughtworks/talisman/releases/latest/download/talisman_linux_amd64
+    - chmod +x ~/.talisman/bin/talisman
+    - export TALISMAN_HOME="$HOME/.talisman/bin"
+    - export PATH="${TALISMAN_HOME}:$PATH"
+  script:
+    - mkdir -p talisman-report
+    - |
+      echo "Running security checks on all files..."
+      if ! talisman --scan; then
+        echo "⚠️ WARNING: Security issues detected! Some commits may have bypassed local pre-commit hooks."
+        echo "Details of the security issues found:"
+        talisman --scan --reportdirectory=talisman-report
+        exit 1
+      fi
+  artifacts:
+    when: on_failure
+    paths:
+      - talisman-report/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH'
+      when: always

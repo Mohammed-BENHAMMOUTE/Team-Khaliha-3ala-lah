@@ -1,30 +1,31 @@
+include:
+  - local: '.gitlab-ci-base.yml'
+variables:
+  SERVICE_PATH: pitstop-workshop-planning
+  DOCKER_IMAGE_NAME: pitstop-workshop-planning
+  ARTIFACTS_PATH: node_modules/
+  SECURITY_JOB: workshop-planning-security-scan
 stages:
+  - security
   - build
   - package
+workshop-planning-security-scan:
+  extends: .security_scan
 
 build-workshop-planning:
   stage: build
-  image: node:10
+  image: node:16
+  needs:
+    - workshop-planning-security-scan
   script:
-    - echo "Installing dependencies for workshop planning service"
-    - cd ./pitstop-workshop-planning
-    - npm install --production=false
-    - echo "Dependencies installed successfully"
+    - cd ${SERVICE_PATH}
+    - npm ci --cache .npm --prefer-offline
   cache:
+    key: ${CACHE_KEY}-node
     paths:
-      - pitstop-workshop-planning/node_modules/
-  artifacts:
-    paths:
-      - pitstop-workshop-planning/node_modules/
-      - pitstop-workshop-planning/package*.json
+      - ${SERVICE_PATH}/.npm/
+      - ${SERVICE_PATH}/node_modules/
+    policy: pull-push
 
 package-workshop-planning:
-  stage: package
-  image: docker:24
-  services:
-    - docker:24-dind
-  script:
-    - echo "Building and pushing workshop planning service Docker image"
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker build -t "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME" ./pitstop-workshop-planning
-    - docker push "$CI_REGISTRY_USER/pitstop-workshop-planning:$CI_COMMIT_REF_NAME"
+  extends: .package

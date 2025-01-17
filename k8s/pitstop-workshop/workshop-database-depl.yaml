@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pitstop-workshop-database-configmap
+data:
+  MYSQL_DATABASE: pitstop
+  MYSQL_ROOT_PASSWORD: pitstop-user
+  MYSQL_USER: pitstop-user
+  MYSQL_PASSWORD: pitstop-user
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: workshop-db-volume
+  labels:
+    type: local
+spec:
+  storageClassName: "standard"
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workshop-db-pv-claim
+spec:
+  storageClassName: "standard"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pitstop-workshop-database-service
+spec:
+  ports:
+   - name: mysql
+     port: 3308
+     targetPort: 3306
+  selector:
+    app: pitstop-workshop-database
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pitstop-workshop-database
+spec:
+  selector:
+    matchLabels:
+      app: pitstop-workshop-database
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pitstop-workshop-database
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        envFrom:
+            - configMapRef:
+                name: pitstop-workshop-database-configmap
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: workshopdb-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: workshopdb-persistent-storage
+        persistentVolumeClaim:
+          claimName: workshop-db-pv-claim

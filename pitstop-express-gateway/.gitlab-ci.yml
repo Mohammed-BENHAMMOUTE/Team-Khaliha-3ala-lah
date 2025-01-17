@@ -1,30 +1,34 @@
+include:
+  - local: '.gitlab-ci-base.yml'
+
+variables:
+  SERVICE_PATH: pitstop-express-gateway
+  DOCKER_IMAGE_NAME: pitstop-express-gateway
+  NODE_ENV: production
+  CACHE_KEY: ${CI_COMMIT_REF_SLUG}
+
 stages:
+  - security
   - build
   - package
 
+express-gateway-security-scan:
+  extends: .security_scan
+
 build-express-gateway-service:
   stage: build
-  image: node:10
+  image: node:16
+  needs:
+    - express-gateway-security-scan
   script:
-    - echo "Installing dependencies for gate-way service"
-    - cd ./pitstop-express-gateway
-    - npm install --production=false
-    - echo "Dependencies installed successfully"
+    - cd ${SERVICE_PATH}
+    - npm ci --cache .npm --prefer-offline
   cache:
+    key: ${CACHE_KEY}-node
     paths:
-      - pitstop-express-gateway/node_modules
-  artifacts:
-    paths:
-      - pitstop-express-gateway/node_modules
-      - pitstop-express-gateway/package*.json
+      - ${SERVICE_PATH}/.npm/
+      - ${SERVICE_PATH}/node_modules/
+    policy: pull-push
 
 package-express-gateway-service:
-  stage: package
-  image: docker:24
-  services:
-    - docker:24-dind
-  script:
-    - echo "Building and pushing gateway service docker image"
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
-    - docker build -t "$CI_REGISTRY_USER/pitstop-gateway:$CI_COMMIT_REF_NAME" ./pitstop-express-gateway
-    - docker push "$CI_REGISTRY_USER/pitstop-gateway:$CI_COMMIT_REF_NAME"
+  extends: .package

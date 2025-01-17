@@ -7,5 +7,9 @@
   "main": "server.js",
   "dependencies": {
     "express-gateway": "^1.16.11"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   }
 }

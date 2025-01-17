@@ -1,0 +1,56 @@
+gitlabUrl: https://gitlab.com/
+runnerRegistrationToken: "GR1348941mD-tGy2KAoY3UQnZKzre"
+concurrent: 10
+checkInterval: 30
+
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods"]
+      verbs: ["list", "get", "watch", "create", "delete"]
+    - apiGroups: [""]
+      resources: ["pods/exec"]
+      verbs: ["create"]
+    - apiGroups: [""]
+      resources: ["pods/log"]
+      verbs: ["get"]
+    - apiGroups: [""]
+      resources: ["pods/attach"]
+      verbs: ["list", "get", "create", "delete", "update"]
+    - apiGroups: [""]
+      resources: ["secrets"]
+      verbs: ["list", "get", "create", "delete", "update"]
+    - apiGroups: [""]
+      resources: ["configmaps"]
+      verbs: ["list", "get", "create", "delete", "update"]
+
+runners:
+  config: |
+    [[runners]]
+      [runners.kubernetes]
+        namespace = "gitlab"
+        tls_verify = false
+        image = "docker:19"
+        privileged = true
+  privileged: true
+
+# Add these recommended settings
+securityContext:
+  runAsUser: 100
+  fsGroup: 65533
+
+# If you need persistent storage for cache
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 8Gi
+
+# For better resource management
+resources:
+  limits:
+    memory: 256Mi
+    cpu: 200m
+  requests:
+    memory: 128Mi
+    cpu: 100m

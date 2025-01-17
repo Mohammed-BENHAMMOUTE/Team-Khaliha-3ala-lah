@@ -1,0 +1,126 @@
+concurrent = 3
+check_interval = 0
+connection_max_age = "15m0s"
+shutdown_timeout = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "pitstop-docker-runner"
+  url = "https://gitlab.com"
+  id = 0
+  token = ""
+  token_obtained_at = 0001-01-01T00:00:00Z
+  token_expires_at = 0001-01-01T00:00:00Z
+  executor = "docker"
+  [runners.docker]
+    tls_verify = false
+    image = "docker:24"
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    volumes = ["/cache", "/var/run/docker.sock:/var/run/docker.sock"]
+    shm_size = 0
+    network_mtu = 0
+
+[[runners]]
+  name = "pitstop-docker-runner"
+  url = "https://gitlab.com/"
+  id = 45288980
+  token = "glrt-t3_Ex6V9m3wss7CeeL7p1eG"
+  token_obtained_at = 2025-01-16T14:24:25Z
+  token_expires_at = 0001-01-01T00:00:00Z
+  executor = "docker"
+  [runners.custom_build_dir]
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+    [runners.cache.s3]
+    [runners.cache.gcs]
+    [runners.cache.azure]
+  [runners.docker]
+    tls_verify = false
+    image = "docker:24"
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    volumes = ["/cache"]
+    shm_size = 0
+    network_mtu = 0
+
+[[runners]]
+  name = "pitstop-docker-runner"
+  url = "https://gitlab.com/"
+  id = 45288980
+  token = "glrt-t3_Ex6V9m3wss7CeeL7p1eG"
+  token_obtained_at = 2025-01-16T14:29:43Z
+  token_expires_at = 0001-01-01T00:00:00Z
+  executor = "docker"
+  [runners.custom_build_dir]
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+    [runners.cache.s3]
+    [runners.cache.gcs]
+    [runners.cache.azure]
+  [runners.docker]
+    tls_verify = false
+    image = "docker:24"
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    volumes = ["/cache"]
+    shm_size = 0
+    network_mtu = 0
+
+[[runners]]
+  name = "pitstop-docker-runner"
+  url = "https://gitlab.com/"
+  id = 45288980
+  token = "glrt-t3_Ex6V9m3wss7CeeL7p1eG"
+  token_obtained_at = 2025-01-16T15:07:03Z
+  token_expires_at = 0001-01-01T00:00:00Z
+  executor = "docker"
+  [runners.custom_build_dir]
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+    [runners.cache.s3]
+    [runners.cache.gcs]
+    [runners.cache.azure]
+  [runners.docker]
+    tls_verify = false
+    image = "docker:24"
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    volumes = ["/cache"]
+    shm_size = 0
+    network_mtu = 0
+
+[[runners]]
+  name = "pitstop-docker-runner"
+  url = "https://gitlab.com/"
+  id = 45288980
+  token = "glrt-t3_Ex6V9m3wss7CeeL7p1eG"
+  token_obtained_at = 2025-01-17T12:32:51Z
+  token_expires_at = 0001-01-01T00:00:00Z
+  executor = "docker"
+  [runners.custom_build_dir]
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+    [runners.cache.s3]
+    [runners.cache.gcs]
+    [runners.cache.azure]
+  [runners.docker]
+    tls_verify = false
+    image = "docker:24"
+    privileged = false
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    volumes = ["/cache"]
+    shm_size = 0
+    network_mtu = 0

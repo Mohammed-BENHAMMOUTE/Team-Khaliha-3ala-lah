@@ -1,0 +1,21 @@
+.node_cache_template: &node_cache
+  cache:
+    key: ${CACHE_KEY}-node
+    paths:
+      - pitstop-customer/.npm/
+      - pitstop-customer/node_modules/
+    policy: pull-push
+
+.security_scan_template: &security_scan
+  stage: security
+  tags:
+    - pitstop-docker
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL ./pitstop-customer
+  artifacts:
+    paths:
+      - trivy-report.json
+    expire_in: 1 week

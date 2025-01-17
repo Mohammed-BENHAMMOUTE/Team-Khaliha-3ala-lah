@@ -1,0 +1,114 @@
+variables:
+  NODE_ENV: production
+  CACHE_KEY: ${CI_COMMIT_REF_SLUG}
+  NODE_VERSION: "10"
+  DOCKER_BUILDKIT: 1
+  DOCKER_CLI_EXPERIMENTAL: enabled
+
+.node_cache_template: &node_cache
+  cache:
+    key: ${CACHE_KEY}-node
+    paths:
+      - ${SERVICE_PATH}/.npm/
+      - ${SERVICE_PATH}/node_modules/
+    policy: pull-push
+
+.security_scan:
+  stage: security
+  tags:
+    - pitstop-docker
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  rules:
+    - changes:
+      - "**/*.js"
+      - "**/*.ts" 
+      - "**/*.vue"
+      - "!**/*.css"
+      - "!**/*.html"
+      - "!**/*.json"
+      when: always
+    - when: never
+  script:
+    - trivy fs --format json -o trivy-report.json --severity HIGH,CRITICAL ./${SERVICE_PATH}
+  artifacts:
+    paths:
+      - trivy-report.json
+    expire_in: 1 week
+
+.build:
+  stage: build
+  tags:
+    - pitstop-docker
+  image: node:${NODE_VERSION}
+  <<: *node_cache
+  before_script:
+    - cd ${SERVICE_PATH}
+    - npm ci --cache .npm --prefer-offline
+  script:
+    - npm install --production=false
+    - if [ -n "${BUILD_COMMAND}" ]; then npm run ${BUILD_COMMAND}; fi
+  artifacts:
+    paths:
+      - ${SERVICE_PATH}/${ARTIFACTS_PATH}
+    expire_in: 1 hour
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "devSecOps"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never
+
+.package:
+  stage: package
+  tags:
+    - pitstop-docker
+  image: docker:24
+  services:
+    - docker:24-dind
+  # needs:
+  #   - job: ${SECURITY_JOB}
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+  script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "main" ]]; then
+        docker build \
+          -t "$CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:latest" \
+          -t "$CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:$CI_COMMIT_SHA" \
+          ./${SERVICE_PATH}
+        docker push "$CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:latest"
+        docker push "$CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:$CI_COMMIT_SHA"
+      else
+        docker build \
+          -t "$CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:$CI_COMMIT_REF_NAME" \
+          ./${SERVICE_PATH}
+        docker push "$CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:$CI_COMMIT_REF_NAME"
+      fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - ${SERVICE_PATH}/**
+      when: always
+    - when: never
+
+# .argoCD:
+#   image: bitnami/git:latest
+#   stage: deploy-k8s
+#   before_script:
+#     - git config --global user.email "zoulatizakaria3@gmail.com"
+#     - git config --global user.name "Zakaria-Zoulati"
+#   script:
+#     - git clone https://gitlab.com/Zakaria-Zoulati/devops_k8s.git
+#     - cd devops_k8s/pitstop-k8s/
+#     - COMMIT_HASH=$(echo "$CI_COMMIT_SHA" | cut -c1-8)
+#     - sed -i "s|image: $CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:.*|image: $CI_REGISTRY_USER/${DOCKER_IMAGE_NAME}:$COMMIT_HASH|" ${YAML_NAME}
+#     - cat ${YAML_NAME}
+#     - git add ${YAML_NAME}
+#     - git commit -m "microservice manifests versions changes successfully"
+#     - git remote set-url origin https://oauth2:$ACCESS_TOKEN_REPO@gitlab.com/Zakaria-Zoulati/devops_k8s.git
+#     - git push -uf origin main | true
+
+
+
