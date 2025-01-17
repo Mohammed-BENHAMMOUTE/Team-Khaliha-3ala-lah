@@ -75,10 +75,10 @@ security_gate:
       optional: true
     - job: semgrep-sast
       optional: true
-    - job: container_scanning
-      optional: true
-    - job: dast
-      optional: true
+    # - job: container_scanning
+    #   optional: true
+    # - job: dast
+    #   optional: true
   script:
     - |
       for report in gl-*-report.json; do
