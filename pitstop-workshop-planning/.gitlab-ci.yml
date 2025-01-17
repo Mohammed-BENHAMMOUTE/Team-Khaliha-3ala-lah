@@ -14,7 +14,11 @@ variables:
   NODE_ENV: production
   CACHE_KEY: ${CI_COMMIT_REF_SLUG}
   YAML_NAME_4: "backend.yaml"
-  
+  # Security thresholds
+  CVSS_THRESHOLD_CRITICAL: "9.0"
+  CVSS_THRESHOLD_HIGH: "7.0"
+  CVSS_THRESHOLD_MEDIUM: "4.0"
+
 stages:
   - security
   - test
@@ -22,18 +26,67 @@ stages:
   - package
   - deploy-k8s
 
+# SAST Configuration
+semgrep-sast:
+  rules:
+    - when: always
+  variables:
+    SECURE_LOG_LEVEL: "error"
+    SAST_EXCLUDED_PATHS: "spec, test, tests, tmp"
+  script:
+    - |
+      if [ $(cat gl-sast-report.json | jq '.vulnerabilities[] | select(.severity == "Critical" or (.severity == "High" and .confidence == "High")) | .id' | wc -l) -gt 0 ]; then
+        echo "Critical SAST vulnerabilities found!"
+        exit 1
+      fi
+
+# Software Composition Analysis (Dependency Scanning)
 gemnasium-dependency_scanning:
   rules:
     - when: always
+  variables:
+    DS_EXCLUDED_PATHS: "spec, test, tests, tmp"
+    DS_DEFAULT_ANALYZERS: "gemnasium"
+  script:
+    - |
+      if [ $(cat gl-dependency-scanning-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
+        echo "High or Critical vulnerabilities found in dependencies!"
+        exit 1
+      fi
 
-workshop-planning-security-scan:
-  extends: .security_scan
-
+# Container Security
 container_scanning:
-  stage: container-security
+  stage: security
   rules:
     - when: always
+  variables:
+    CS_SEVERITY_THRESHOLD: "High"
+    CS_VULNERABILITY_THRESHOLD: "0"
+  script:
+    - |
+      if [ $(cat gl-container-scanning-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
+        echo "High or Critical vulnerabilities found in container!"
+        exit 1
+      fi
 
+# DAST Configuration
+dast:
+  rules:
+    - when: always
+  variables:
+    DAST_EXCLUDED_URLS: ""
+    DAST_AUTH_URL: ${DAST_WEBSITE}/login
+    DAST_USERNAME: ${DAST_USER}
+    DAST_PASSWORD: ${DAST_PASSWORD}
+    DAST_FULL_SCAN_ENABLED: "true"
+  script:
+    - |
+      if [ $(cat gl-dast-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
+        echo "High or Critical DAST vulnerabilities found!"
+        exit 1
+      fi
+
+# Rest of your pipeline remains the same...
 build-workshop-planning:
   stage: build
   image: node:16
@@ -53,22 +106,17 @@ package-workshop-planning:
     - build-workshop-planning
 
 deploy-k8s-workshop-planning-service:
-    # extends : .argoCD
     image: bitnami/git:latest
     stage: deploy-k8s
     before_script:
-      # - sleep $((${number} * 60))
       - git config --global user.email "zoulatizakaria3@gmail.com"
       - git config --global user.name "Zakaria-Zoulati"
-      # - git config --global credential.helper cache
     script:
       - git clone https://gitlab.com/Zakaria-Zoulati/devops_k8s.git
       - cd devops_k8s/pitstop-k8s/
-      - cat backend.yaml
       - COMMIT_HASH=$(echo "$CI_COMMIT_SHA" | cut -c1-8)
       - | 
         sed -i "s|image: $CI_REGISTRY_USER/pitstop-workshop-planning\(:.*\)\?|image: $CI_REGISTRY_USER/pitstop-workshop-planning:${COMMIT_HASH}|" ${YAML_NAME_4}
-      - cat ${YAML_NAME_4}
       - git add backend.yaml
       - git commit -m "microservice manifests versions changes successfully"
       - git remote set-url origin https://oauth2:$ACCESS_TOKEN_REPO@gitlab.com/Zakaria-Zoulati/devops_k8s.git
