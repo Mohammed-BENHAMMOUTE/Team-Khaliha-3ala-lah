@@ -30,10 +30,13 @@ stages:
   - deploy-k8s
 
 .security_base:
-  allow_failure: false  # Critical: This ensures the pipeline fails when vulnerabilities are found
+  allow_failure: false
   artifacts:
     reports:
-      security: gl-*-report.json
+      container_scanning: gl-container-scanning-report.json
+      sast: gl-sast-report.json
+      dependency_scanning: gl-dependency-scanning-report.json
+      dast: gl-dast-report.json
   rules:
     - when: always
 
@@ -53,7 +56,6 @@ semgrep-sast:
         exit 1
       fi
 
-# Software Composition Analysis (Dependency Scanning)
 gemnasium-dependency_scanning:
   extends: .security_base
   script:
@@ -70,10 +72,9 @@ gemnasium-dependency_scanning:
         exit 1
       fi
 
-# Container Security
 container_scanning:
   extends: .security_base
-  stage: container-security
+  stage: security
   script:
     - /analyzer run
     - |
@@ -88,8 +89,6 @@ container_scanning:
         exit 1
       fi
 
-# DAST Configuration
-# DAST Configuration
 dast:
   extends: .security_base
   variables:
@@ -107,8 +106,6 @@ dast:
         echo "❌ No DAST report found"
         exit 1
       fi
-
-
 
 security_gate:
   stage: security
