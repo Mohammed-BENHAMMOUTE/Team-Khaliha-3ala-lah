@@ -18,6 +18,9 @@ variables:
   CVSS_THRESHOLD_CRITICAL: "9.0"
   CVSS_THRESHOLD_HIGH: "7.0"
   CVSS_THRESHOLD_MEDIUM: "4.0"
+  SECURE_LOG_LEVEL: debug
+  SCAN_KUBERNETES_MANIFESTS: "true"
+  DS_EXCLUDED_PATHS: "spec, test, tests, tmp"
 
 stages:
   - security
@@ -26,65 +29,109 @@ stages:
   - package
   - deploy-k8s
 
-# SAST Configuration
-semgrep-sast:
+.security_base:
+  allow_failure: false  # Critical: This ensures the pipeline fails when vulnerabilities are found
+  artifacts:
+    reports:
+      security: gl-*-report.json
   rules:
     - when: always
-  variables:
-    SECURE_LOG_LEVEL: "error"
-    SAST_EXCLUDED_PATHS: "spec, test, tests, tmp"
+
+semgrep-sast:
+  extends: .security_base
   script:
+    - /analyzer run
     - |
-      if [ $(cat gl-sast-report.json | jq '.vulnerabilities[] | select(.severity == "Critical" or (.severity == "High" and .confidence == "High")) | .id' | wc -l) -gt 0 ]; then
-        echo "Critical SAST vulnerabilities found!"
+      if [ -f gl-sast-report.json ]; then
+        HIGH_VULNS=$(cat gl-sast-report.json | jq '[.vulnerabilities[] | select(.severity | IN("Critical", "High"))] | length')
+        if [ "$HIGH_VULNS" -gt 0 ]; then
+          echo "❌ Found ${HIGH_VULNS} high or critical vulnerabilities"
+          exit 1
+        fi
+      else
+        echo "❌ No SAST report found"
         exit 1
       fi
 
 # Software Composition Analysis (Dependency Scanning)
 gemnasium-dependency_scanning:
-  rules:
-    - when: always
-  variables:
-    DS_EXCLUDED_PATHS: "spec, test, tests, tmp"
-    DS_DEFAULT_ANALYZERS: "gemnasium"
+  extends: .security_base
   script:
+    - /analyzer run
     - |
-      if [ $(cat gl-dependency-scanning-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
-        echo "High or Critical vulnerabilities found in dependencies!"
+      if [ -f gl-dependency-scanning-report.json ]; then
+        HIGH_DEPS=$(cat gl-dependency-scanning-report.json | jq '[.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH)] | length')
+        if [ "$HIGH_DEPS" -gt 0 ]; then
+          echo "❌ Found ${HIGH_DEPS} dependencies with high or critical vulnerabilities"
+          exit 1
+        fi
+      else
+        echo "❌ No dependency scanning report found"
         exit 1
       fi
 
 # Container Security
 container_scanning:
-  stage: security
-  rules:
-    - when: always
-  variables:
-    CS_SEVERITY_THRESHOLD: "High"
-    CS_VULNERABILITY_THRESHOLD: "0"
+  extends: .security_base
+  stage: container-security
   script:
+    - /analyzer run
     - |
-      if [ $(cat gl-container-scanning-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
-        echo "High or Critical vulnerabilities found in container!"
+      if [ -f gl-container-scanning-report.json ]; then
+        CONTAINER_VULNS=$(cat gl-container-scanning-report.json | jq '[.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH)] | length')
+        if [ "$CONTAINER_VULNS" -gt 0 ]; then
+          echo "❌ Found ${CONTAINER_VULNS} container vulnerabilities above threshold"
+          exit 1
+        fi
+      else
+        echo "❌ No container scanning report found"
         exit 1
       fi
 
 # DAST Configuration
+# DAST Configuration
 dast:
-  rules:
-    - when: always
+  extends: .security_base
   variables:
-    DAST_EXCLUDED_URLS: ""
-    DAST_AUTH_URL: ${DAST_WEBSITE}/login
-    DAST_USERNAME: ${DAST_USER}
-    DAST_PASSWORD: ${DAST_PASSWORD}
     DAST_FULL_SCAN_ENABLED: "true"
   script:
+    - /analyzer run
     - |
-      if [ $(cat gl-dast-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
-        echo "High or Critical DAST vulnerabilities found!"
+      if [ -f gl-dast-report.json ]; then
+        DAST_VULNS=$(cat gl-dast-report.json | jq '[.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH)] | length')
+        if [ "$DAST_VULNS" -gt 0 ]; then
+          echo "❌ Found ${DAST_VULNS} DAST vulnerabilities above threshold"
+          exit 1
+        fi
+      else
+        echo "❌ No DAST report found"
         exit 1
       fi
+
+
+
+security_gate:
+  stage: security
+  needs:
+    - semgrep-sast
+    - gemnasium-dependency_scanning
+    - container_scanning
+    - dast
+  script:
+    - |
+      for report in gl-*-report.json; do
+        if [ -f "$report" ]; then
+          VULNS=$(cat "$report" | jq '[.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH)] | length')
+          if [ "$VULNS" -gt 0 ]; then
+            echo "❌ Security gate failed: Found vulnerabilities above threshold in $report"
+            exit 1
+          fi
+        fi
+      done
+  allow_failure: false
+
+
+
 
 customer-security-scan:
   extends: .security_scan
