@@ -89,8 +89,8 @@ package-webapp:
   extends: .package
   needs:
     - build-webapp-service
-  variables:
-    SERVICE_PATH: ${SERVICE_PATH}
+  # variables:
+  #   SERVICE_PATH: ${SERVICE_PATH}
 
 deploy-k8s-service:
     image: bitnami/git:latest
