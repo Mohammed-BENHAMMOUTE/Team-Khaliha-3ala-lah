@@ -1,0 +1,182 @@
+version: "3.7"
+services:
+  pitstop-webapp:
+    build:
+      context: ./pitstop-webapp
+    image: msalekmouad/pitstop-webapp:dev
+    container_name: pitstop-webapp
+    volumes:
+      - ./pitstop-webapp:/app/client
+    ports:
+      - "8081:8080"
+  
+  pitstop-gateway:
+    build:
+      context: ./pitstop-express-gateway
+    image: slihatim/pitstop-express-gateway
+    env_file:
+      - ./.env  
+    container_name: pitstop-express-gateway
+    environment:
+      - SERVICE_NAME= $GATEWAYAPI_NAME
+      - PORT=$GATEWAYAPI_PORT
+    volumes:
+      - ./pitstop-express-gateway:/app/gateway
+    ports:
+      - $GATEWAYAPI_PORT:$GATEWAYAPI_PORT
+    restart: unless-stopped
+
+  pitstop-customer-database:
+    image: mysql:5.7
+    container_name: pitstop-customer-database
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_DATABASE: $DB_NAME
+      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_PASSWORD
+      DATABASE_HOST: $CUSTOMERAPI_DBHOST
+    ports:
+      - $CUSTOMERDB_PORT:$DB_DOCKER_PORT
+    volumes:
+      - customer-db:/var/lib/mysql
+
+  pitstop-customer-service:
+    build:
+      context: ./pitstop-customer
+    image: slihatim/pitstop-customer
+    env_file:
+      - ./.env  
+    container_name: pitstop-customer
+    environment:
+      - DB_USER=$DB_USER
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_NAME=$DB_NAME
+      - DB_HOST=$CUSTOMERAPI_DBHOST
+      - DB_PORT=$CUSTOMERDB_PORT
+      - SERVICE_NAME= $CUSTOMERAPI_NAME
+      - PORT=$CUSTOMERAPI_PORT
+      - MESSAGE_BUS=$MESSAGE_BUS
+      - MESSAGE_BUS_USERNAME=$MESSAGE_BUS_USERNAME
+      - MESSAGE_BUS_PASSWORD=$MESSAGE_BUS_PASSWORD
+      - MESSAGE_BUS_TIMEOUT=$MESSAGE_BUS_TIMEOUT
+    volumes:
+      - ./pitstop-customer:/app/customer
+    ports:
+      - $CUSTOMERAPI_PORT:$CUSTOMERAPI_PORT
+    depends_on:
+      - pitstop-customer-database
+      - rabbitmq
+    restart: unless-stopped
+
+
+  pitstop-vehicle-database:
+    image: mysql:5.7
+    container_name: pitstop-vehicle-database
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_DATABASE: $DB_NAME
+      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_PASSWORD
+      DATABASE_HOST: $VEHICLEAPI_DBHOST
+    ports:
+      - $VEHICLEDB_PORT:$DB_DOCKER_PORT
+    volumes:
+      - vehicle-db:/var/lib/mysql
+
+  pitstop-vehicle-service:
+    build:
+      context: ./pitstop-vehicle
+    image: slihatim/pitstop-vehicle
+    env_file:
+      - ./.env  
+    container_name: pitstop-vehicle
+    environment:
+      - DB_USER=$DB_USER
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_NAME=$DB_NAME
+      - DB_HOST=$VEHICLEAPI_DBHOST
+      - DB_PORT=$VEHICLEDB_PORT
+      - SERVICE_NAME= $VEHICLEAPI_NAME
+      - PORT=$VEHICLEAPI_PORT
+      - MESSAGE_BUS=$MESSAGE_BUS
+      - MESSAGE_BUS_USERNAME=$MESSAGE_BUS_USERNAME
+      - MESSAGE_BUS_PASSWORD=$MESSAGE_BUS_PASSWORD
+      - MESSAGE_BUS_TIMEOUT=$MESSAGE_BUS_TIMEOUT
+    volumes:
+      - ./pitstop-vehicle:/app/vehicle
+    ports:
+      - $VEHICLEAPI_PORT:$VEHICLEAPI_PORT
+    depends_on:
+      - pitstop-vehicle-database
+      - rabbitmq
+    restart: unless-stopped
+
+
+  pitstop-workshop-database:
+    image: mysql:5.7
+    container_name: pitstop-workshop-database
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_DATABASE: $DB_NAME
+      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_PASSWORD
+      DATABASE_HOST: $WORKSHOPAPI_DBHOST
+    ports:
+      - $WORKSHOPDB_PORT:$DB_DOCKER_PORT
+    volumes:
+      - workshop-db:/var/lib/mysql
+
+  pitstop-workshop-service:
+    build:
+      context: ./pitstop-workshop-planning
+    image: slihatim/pitstop-workshop-planning
+    env_file:
+      - ./.env  
+    container_name: pitstop-workshop-planning
+    environment:
+      - DB_USER=$DB_USER
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_NAME=$DB_NAME
+      - DB_HOST=$WORKSHOPAPI_DBHOST
+      - DB_PORT=$WORKSHOPDB_PORT
+      - SERVICE_NAME= $WORKSHOPAPI_NAME
+      - PORT=$WORKSHOPAPI_PORT
+      - MESSAGE_BUS=$MESSAGE_BUS
+      - MESSAGE_BUS_USERNAME=$MESSAGE_BUS_USERNAME
+      - MESSAGE_BUS_PASSWORD=$MESSAGE_BUS_PASSWORD
+      - MESSAGE_BUS_TIMEOUT=$MESSAGE_BUS_TIMEOUT
+    volumes:
+      - ./pitstop-workshop-planning:/app/workshop-planning
+    ports:
+      - $WORKSHOPAPI_PORT:$WORKSHOPAPI_PORT
+    depends_on:
+      - pitstop-workshop-database
+      - rabbitmq
+    restart: unless-stopped
+
+  rabbitmq:
+    container_name: pitstop-rabbitmq
+    image: rabbitmq:3-management
+    env_file:
+      - ./.env  
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      - RABBITMQ_DEFAULT_USER=$MESSAGE_BUS_USERNAME
+      - RABBITMQ_DEFAULT_PASS=$MESSAGE_BUS_PASSWORD
+    volumes:
+      - rabbitmq-data:/data
+
+    
+volumes: 
+  customer-db: 
+  vehicle-db: 
+  workshop-db:
+  rabbitmq-data:

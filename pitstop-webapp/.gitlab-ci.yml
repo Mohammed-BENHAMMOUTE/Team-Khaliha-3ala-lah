@@ -1,0 +1,29 @@
+stages:
+  - build
+  - package
+
+build-webapp-service:
+  stage: build
+  image: node:10
+  script:
+    - cd pitstop-webapp
+    - npm install --production=false
+    - npm run build
+  artifacts:
+    paths:
+      - pitstop-webapp/dist/
+  cache:
+      paths:
+          - pitstop-webapp/node_modules/
+
+package-webapp-service:
+  stage: package
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+  script:
+    - docker build -t "$CI_REGISTRY_USER/pitstop-webapp:$CI_COMMIT_SHA" -t "$CI_REGISTRY_USER/pitstop-webapp:latest" ./pitstop-webapp
+    - docker push "$CI_REGISTRY_USER/pitstop-webapp:$CI_COMMIT_SHA"
+    - docker push "$CI_REGISTRY_USER/pitstop-webapp:latest"

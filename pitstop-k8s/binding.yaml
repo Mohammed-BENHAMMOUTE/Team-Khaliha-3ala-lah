@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pitstop-resource-access-binding
+  namespace: pitstop
+subjects:
+- kind: ServiceAccount
+  name: abdoanss
+roleRef:
+  kind: Role
+  name: pitstop-resource-access-role

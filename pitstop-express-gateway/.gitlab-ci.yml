@@ -1,0 +1,30 @@
+stages:
+  - build
+  - package
+
+build-express-gateway-service:
+  stage: build
+  image: node:10
+  script:
+    - echo "Installing dependencies for gate-way service"
+    - cd ./pitstop-express-gateway
+    - npm install --production=false
+    - echo "Dependencies installed successfully"
+  cache:
+    paths:
+      - pitstop-express-gateway/node_modules
+  artifacts:
+    paths:
+      - pitstop-express-gateway/node_modules
+      - pitstop-express-gateway/package*.json
+
+package-express-gateway-service:
+  stage: package
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - echo "Building and pushing gateway service docker image"
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD"
+    - docker build -t "$CI_REGISTRY_USER/pitstop-gateway:$CI_COMMIT_REF_NAME" ./pitstop-express-gateway
+    - docker push "$CI_REGISTRY_USER/pitstop-gateway:$CI_COMMIT_REF_NAME"

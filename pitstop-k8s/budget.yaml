@@ -1,0 +1,55 @@
+# budget.yaml
+apiVersion: policy/v1  # Updated from v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: customer-service-budget  # Simplified name
+  namespace: pitstop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: customer-service  # Match the actual pod labels
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vehicle-service-budget
+  namespace: pitstop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: vehicle-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: workshop-service-budget
+  namespace: pitstop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: workshop-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: webapp-budget
+  namespace: pitstop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: webapp
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: express-gateway-budget
+  namespace: pitstop
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: express-gateway
