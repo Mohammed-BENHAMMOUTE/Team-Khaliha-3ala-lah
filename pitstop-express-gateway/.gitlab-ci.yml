@@ -13,8 +13,8 @@ variables:
   SECURITY_JOB: gateway-security-scan
   NODE_ENV: production
   CACHE_KEY: ${CI_COMMIT_REF_SLUG}
-  YAML_NAME: "gateway.yaml"
-
+  YAML_NAME_1: "gateway.yaml"
+  
 stages:
   - security
   - test
@@ -52,5 +52,26 @@ package-gateway-service:
   needs:
     - build-gateway-service
 
-deploy-k8s-service:
-  extends: .argoCD
+deploy-k8s-gateway-service:
+    # extends : .argoCD
+    image: bitnami/git:latest
+    stage: deploy-k8s
+    before_script:
+      # - sleep $((${number} * 60))
+      - git config --global user.email "zoulatizakaria3@gmail.com"
+      - git config --global user.name "Zakaria-Zoulati"
+      # - git config --global credential.helper cache
+
+    script:
+      - git clone https://gitlab.com/Zakaria-Zoulati/devops_k8s.git
+      - cd devops_k8s/pitstop-k8s/
+      - cat gateway.yaml
+      - COMMIT_HASH=$(echo "$CI_COMMIT_SHA" | cut -c1-8)
+      - | 
+        sed -i "s|image: $CI_REGISTRY_USER/pitstop-express-gateway\(:.*\)\?|image: $CI_REGISTRY_USER/pitstop-express-gateway:${COMMIT_HASH}|" ${YAML_NAME_1}
+      - cat ${YAML_NAME_1}
+      - git add ${YAML_NAME_1}
+      - git commit -m "microservice manifests versions changes successfully"
+      - git remote set-url origin https://oauth2:$ACCESS_TOKEN_REPO@gitlab.com/Zakaria-Zoulati/devops_k8s.git
+      - git push origin main  || true  
+    needs: ["deploy-k8s-customer-service"]

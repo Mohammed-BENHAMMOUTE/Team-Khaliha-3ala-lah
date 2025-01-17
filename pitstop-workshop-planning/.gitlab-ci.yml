@@ -13,8 +13,8 @@ variables:
   SECURITY_JOB: workshop-planning-security-scan
   NODE_ENV: production
   CACHE_KEY: ${CI_COMMIT_REF_SLUG}
-  YAML_NAME: "workshop-planning.yaml"
-
+  YAML_NAME_4: "backend.yaml"
+  
 stages:
   - security
   - test
@@ -52,5 +52,25 @@ package-workshop-planning:
   needs:
     - build-workshop-planning
 
-deploy-k8s-service:
-  extends: .argoCD
+deploy-k8s-workshop-planning-service:
+    # extends : .argoCD
+    image: bitnami/git:latest
+    stage: deploy-k8s
+    before_script:
+      # - sleep $((${number} * 60))
+      - git config --global user.email "zoulatizakaria3@gmail.com"
+      - git config --global user.name "Zakaria-Zoulati"
+      # - git config --global credential.helper cache
+    script:
+      - git clone https://gitlab.com/Zakaria-Zoulati/devops_k8s.git
+      - cd devops_k8s/pitstop-k8s/
+      - cat backend.yaml
+      - COMMIT_HASH=$(echo "$CI_COMMIT_SHA" | cut -c1-8)
+      - | 
+        sed -i "s|image: $CI_REGISTRY_USER/pitstop-workshop-planning\(:.*\)\?|image: $CI_REGISTRY_USER/pitstop-workshop-planning:${COMMIT_HASH}|" ${YAML_NAME_4}
+      - cat ${YAML_NAME_4}
+      - git add backend.yaml
+      - git commit -m "microservice manifests versions changes successfully"
+      - git remote set-url origin https://oauth2:$ACCESS_TOKEN_REPO@gitlab.com/Zakaria-Zoulati/devops_k8s.git
+      - git push origin main  || true  
+    needs: ["deploy-k8s-webapp-service"]
