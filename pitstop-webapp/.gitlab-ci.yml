@@ -38,8 +38,8 @@ stages:
 
 
 gemnasium-dependency_scanning:
-  tags:
-    - pitstop-docker
+  # tags:
+    # - pitstop-docker
   rules:
     - when: always
 
@@ -61,8 +61,8 @@ webapp-security-scan:
   extends: .security_scan
 
 container_scanning:
-  tags:
-    - pitstop-docker
+  # tags:
+  #   - pitstop-docker
   stage: container-security
   rules:
     - when: always

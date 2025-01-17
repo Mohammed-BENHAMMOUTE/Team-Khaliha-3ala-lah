@@ -20,15 +20,15 @@ include:
 
 
 gemnasium-dependency_scanning:
-  tags:
-    - pitstop-docker
+  # tags:
+  #   - pitstop-docker
   rules:
     - when: always
 
 
 container_scanning:
-  tags:
-    - pitstop-docker
+  # tags:
+    # - pitstop-docker
   stage: container-security
   rules:
     - when: always
@@ -45,8 +45,8 @@ container_scanning:
 pre-commit:
   stage: security
   image: python:3.9
-  tags:
-    - pitstop-docker
+  # tags:
+    # - pitstop-docker
   before_script:
     - apt-get update && apt-get install -y curl git
     # Install Talisman non-interactively

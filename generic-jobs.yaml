@@ -8,8 +8,8 @@
 
 .security_scan_template: &security_scan
   stage: security
-  tags:
-    - pitstop-docker
+  # tags:
+    # - pitstop-docker
   image:
     name: aquasec/trivy:latest
     entrypoint: [""]

@@ -15,8 +15,8 @@ variables:
 
 .security_scan:
   stage: security
-  tags:
-    - pitstop-docker
+  # tags:
+  #   - pitstop-docker
   image:
     name: aquasec/trivy:latest
     entrypoint: [""]
@@ -39,8 +39,8 @@ variables:
 
 .build:
   stage: build
-  tags:
-    - pitstop-docker
+  # tags:
+  #   - pitstop-docker
   image: node:${NODE_VERSION}
   <<: *node_cache
   before_script:
@@ -62,8 +62,8 @@ variables:
 
 .package:
   stage: package
-  tags:
-    - pitstop-docker
+  # tags:
+  #   - pitstop-docker
   image: docker:24
   services:
     - docker:24-dind
