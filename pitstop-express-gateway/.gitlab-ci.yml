@@ -1,34 +1,56 @@
 include:
   - local: '.gitlab-ci-base.yml'
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: DAST.gitlab-ci.yml
 
 variables:
+  GITLAB_ADVANCED_SAST_ENABLED: 'true'
   SERVICE_PATH: pitstop-express-gateway
   DOCKER_IMAGE_NAME: pitstop-express-gateway
+  ARTIFACTS_PATH: ${SERVICE_PATH}/node_modules/
+  SECURITY_JOB: gateway-security-scan
   NODE_ENV: production
   CACHE_KEY: ${CI_COMMIT_REF_SLUG}
+  YAML_NAME: "gateway.yaml"
 
 stages:
   - security
+  - test
   - build
   - package
+  - deploy-k8s
 
-express-gateway-security-scan:
+gemnasium-dependency_scanning:
+  rules:
+    - when: always
+
+gateway-security-scan:
   extends: .security_scan
 
-build-express-gateway-service:
+container_scanning:
+  stage: container-security
+  rules:
+    - when: always
+
+build-gateway-service:
   stage: build
   image: node:16
-  needs:
-    - express-gateway-security-scan
   script:
     - cd ${SERVICE_PATH}
-    - npm ci --cache .npm --prefer-offline
-  cache:
-    key: ${CACHE_KEY}-node
+    - npm install --production=false
+  artifacts:
     paths:
-      - ${SERVICE_PATH}/.npm/
+      - ${SERVICE_PATH}/dist/
+  cache:
+    paths:
       - ${SERVICE_PATH}/node_modules/
-    policy: pull-push
 
-package-express-gateway-service:
+package-gateway-service:
   extends: .package
+  needs:
+    - build-gateway-service
+
+deploy-k8s-service:
+  extends: .argoCD

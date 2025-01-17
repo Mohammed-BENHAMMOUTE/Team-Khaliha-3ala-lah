@@ -1,32 +1,56 @@
 include:
   - local: '.gitlab-ci-base.yml'
+  - template: Jobs/SAST.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: DAST.gitlab-ci.yml
+
 variables:
+  GITLAB_ADVANCED_SAST_ENABLED: 'true'
   SERVICE_PATH: pitstop-vehicle
   DOCKER_IMAGE_NAME: pitstop-vehicle
-  ARTIFACTS_PATH: node_modules/
-  SECURITY_JOB: pitstop-vehicle-security-scan
-  
+  ARTIFACTS_PATH: ${SERVICE_PATH}/node_modules/
+  SECURITY_JOB: vehicle-security-scan
+  NODE_ENV: production
+  CACHE_KEY: ${CI_COMMIT_REF_SLUG}
+  YAML_NAME: "vehicle.yaml"
+
 stages:
   - security
+  - test
   - build
   - package
-pitstop-vehicle-security-scan:
+  - deploy-k8s
+
+gemnasium-dependency_scanning:
+  rules:
+    - when: always
+
+vehicle-security-scan:
   extends: .security_scan
-  
+
+container_scanning:
+  stage: container-security
+  rules:
+    - when: always
+
 build-vehicle-service:
   stage: build
   image: node:16
-  needs:
-    - pitstop-vehicle-security-scan
   script:
     - cd ${SERVICE_PATH}
-    - npm ci --cache .npm --prefer-offline
-  cache:
-    key: ${CACHE_KEY}-node
+    - npm install --production=false
+  artifacts:
     paths:
-      - ${SERVICE_PATH}/.npm/
+      - ${SERVICE_PATH}/dist/
+  cache:
+    paths:
       - ${SERVICE_PATH}/node_modules/
-    policy: pull-push
 
 package-vehicle-service:
   extends: .package
+  needs:
+    - build-vehicle-service
+
+deploy-k8s-service:
+  extends: .argoCD
