@@ -14,6 +14,10 @@ variables:
   NODE_ENV: production
   CACHE_KEY: ${CI_COMMIT_REF_SLUG}
   YAML_NAME_2: "backend.yaml"
+  # Security thresholds
+  CVSS_THRESHOLD_CRITICAL: "9.0"
+  CVSS_THRESHOLD_HIGH: "7.0"
+  CVSS_THRESHOLD_MEDIUM: "4.0"
 
 stages:
   - security
@@ -22,17 +26,68 @@ stages:
   - package
   - deploy-k8s
 
+# SAST Configuration
+semgrep-sast:
+  rules:
+    - when: always
+  variables:
+    SECURE_LOG_LEVEL: "error"
+    SAST_EXCLUDED_PATHS: "spec, test, tests, tmp"
+  script:
+    - |
+      if [ $(cat gl-sast-report.json | jq '.vulnerabilities[] | select(.severity == "Critical" or (.severity == "High" and .confidence == "High")) | .id' | wc -l) -gt 0 ]; then
+        echo "Critical SAST vulnerabilities found!"
+        exit 1
+      fi
+
+# Software Composition Analysis (Dependency Scanning)
 gemnasium-dependency_scanning:
   rules:
     - when: always
+  variables:
+    DS_EXCLUDED_PATHS: "spec, test, tests, tmp"
+    DS_DEFAULT_ANALYZERS: "gemnasium"
+  script:
+    - |
+      if [ $(cat gl-dependency-scanning-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
+        echo "High or Critical vulnerabilities found in dependencies!"
+        exit 1
+      fi
+
+# Container Security
+container_scanning:
+  stage: security
+  rules:
+    - when: always
+  variables:
+    CS_SEVERITY_THRESHOLD: "High"
+    CS_VULNERABILITY_THRESHOLD: "0"
+  script:
+    - |
+      if [ $(cat gl-container-scanning-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
+        echo "High or Critical vulnerabilities found in container!"
+        exit 1
+      fi
+
+# DAST Configuration
+dast:
+  rules:
+    - when: always
+  variables:
+    DAST_EXCLUDED_URLS: ""
+    DAST_AUTH_URL: ${DAST_WEBSITE}/login
+    DAST_USERNAME: ${DAST_USER}
+    DAST_PASSWORD: ${DAST_PASSWORD}
+    DAST_FULL_SCAN_ENABLED: "true"
+  script:
+    - |
+      if [ $(cat gl-dast-report.json | jq '.vulnerabilities[] | select(.severity >= $CVSS_THRESHOLD_HIGH) | .id' | wc -l) -gt 0 ]; then
+        echo "High or Critical DAST vulnerabilities found!"
+        exit 1
+      fi
 
 vehicle-security-scan:
   extends: .security_scan
-
-container_scanning:
-  stage: container-security
-  rules:
-    - when: always
 
 build-vehicle-service:
   stage: build
