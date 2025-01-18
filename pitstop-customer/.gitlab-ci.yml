@@ -21,7 +21,6 @@ variables:
   SECURE_LOG_LEVEL: debug
   SCAN_KUBERNETES_MANIFESTS: "true"
   DS_EXCLUDED_PATHS: "spec, test, tests, tmp"
-
 stages:
   - security
   - test
